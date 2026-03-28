@@ -30,6 +30,7 @@
     <input type="text" id="youtubeLink" placeholder="Paste YouTube link here...">
     <input type="number" id="divCount" value="9" min="1">
     <button onclick="addVideo()">Add to Playlist</button>
+    <button onclick="renderGrid()">Refresh Grid</button>
   </div>
 
   <!-- Playlist display -->
@@ -113,7 +114,8 @@
       for (let i = 0; i < divCount; i++) {
         const video = videos[i % videos.length]; // cycle through videos
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1`;
+        // autoplay + mute + loop
+        iframe.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&loop=1&playlist=${video.id}`;
         iframe.allow = "autoplay";
         videoGrid.appendChild(iframe);
       }
