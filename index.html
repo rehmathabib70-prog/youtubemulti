@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Playlist Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    .controls { text-align: center; margin-bottom: 20px; }
+    input[type="text"], input[type="number"] { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+    #youtubeLink { width: 50%; }
+    #divCount { width: 80px; margin-left: 10px; }
+    button { padding: 10px 15px; margin-left: 10px; background: #0073e6; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #005bb5; }
+    .playlist { margin: 20px auto; width: 80%; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .playlist h2 { margin-top: 0; }
+    .playlist ul { list-style: none; padding: 0; }
+    .playlist li { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+    .remove-btn { background: red; color: #fff; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+    .remove-btn:hover { background: darkred; }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
+    iframe { width: 100%; height: 200px; border: none; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>YouTube Playlist Dashboard</h1>
+
+  <!-- Input controls -->
+  <div class="controls">
+    <input type="text" id="youtubeLink" placeholder="Paste YouTube link here...">
+    <input type="number" id="divCount" value="9" min="1">
+    <button onclick="addVideo()">Add to Playlist</button>
+  </div>
+
+  <!-- Playlist display -->
+  <div class="playlist">
+    <h2>Playlist</h2>
+    <ul id="playlist"></ul>
+  </div>
+
+  <!-- Video grid -->
+  <div class="video-grid" id="videoGrid"></div>
+
+  <script>
+    const playlistElement = document.getElementById('playlist');
+    const videoGrid = document.getElementById('videoGrid');
+    let videos = [];
+
+    function extractVideoId(url) {
+      let videoId = null;
+      if (url.includes("youtube.com/watch?v=")) {
+        videoId = url.split("v=")[1].split("&")[0];
+      } else if (url.includes("youtu.be/")) {
+        videoId = url.split("youtu.be/")[1].split("?")[0];
+      }
+      return videoId;
+    }
+
+    async function getVideoTitle(videoId) {
+      try {
+        const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        const data = await response.json();
+        return data.title;
+      } catch {
+        return "YouTube Video";
+      }
+    }
+
+    async function addVideo() {
+      const link = document.getElementById('youtubeLink').value.trim();
+      if (!link) return;
+
+      const videoId = extractVideoId(link);
+      if (!videoId) {
+        alert("Invalid YouTube link!");
+        return;
+      }
+
+      const title = await getVideoTitle(videoId);
+
+      // Store video
+      videos.push({ id: videoId, title });
+
+      // Update playlist UI
+      const li = document.createElement('li');
+      li.textContent = title;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = "Remove";
+      removeBtn.className = "remove-btn";
+      removeBtn.onclick = () => {
+        videos = videos.filter(v => v.id !== videoId);
+        li.remove();
+        renderGrid();
+      };
+
+      li.appendChild(removeBtn);
+      playlistElement.appendChild(li);
+
+      // Refresh grid
+      renderGrid();
+
+      // Clear input
+      document.getElementById('youtubeLink').value = "";
+    }
+
+    function renderGrid() {
+      videoGrid.innerHTML = "";
+      if (videos.length === 0) return;
+
+      const divCount = parseInt(document.getElementById('divCount').value) || 9;
+
+      for (let i = 0; i < divCount; i++) {
+        const video = videos[i % videos.length]; // cycle through videos
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1`;
+        iframe.allow = "autoplay";
+        videoGrid.appendChild(iframe);
+      }
+    }
+  </script>
+</body>
+</html>
